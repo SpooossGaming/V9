@@ -76,24 +76,46 @@ function renderResults(location, results) {
     el('th', {}, 'Úrkoma'),
   );
   console.log(results);
-  const body = el(
+
+  const thead = el('thead', {}, header);
+
+  const resultsTable = el('table', { class: 'forecast' }, thead);
+  //let body;
+
+  const tbody = el('tbody');
+
+// You would typically append rows to the tbody here
+for (let i = 0; i < results.length; i++) {
+  const bodyRow = el(
     'tr',
     {},
-    el('td', {}, 'Tími'),
-    el('td', {}, 'Hiti'),
-    el('td', {}, 'Úrkoma'),
+    el('td', {}, (results[i].time).substring(11)),
+    el('td', {}, String(results[i].temperature)), // Assuming you have temperature data
+    el('td', {}, String(results[i].precipitation)) // Assuming you have precipitation data
   );
 
-  const resultsTable = el('table', { class: 'forecast' }, header, body);
+  // Append the bodyRow to the tbody
+  tbody.appendChild(bodyRow);
+}
 
-  renderIntoResultsContent(
-    el(
-      'section',
-      {},
-      el('h2', {}, `Leitarniðurstöður fyrir: ${location.title}`),
-      resultsTable,
-    ),
-  );
+// Append tbody to the resultsTable
+resultsTable.appendChild(tbody);
+
+const freakyCityText = el('p', {}, `veðurniðurstöður á lat: 👆${location.lat}👇 lng: 👉${location.lng}👈`);
+// Render the table into the results content
+renderIntoResultsContent(
+  
+  el(
+    'section',
+    {},
+    
+    el('h2', {}, `Leitarniðurstöður fyrir: ${location.title}`),
+    freakyCityText,
+    resultsTable
+      ),
+    );
+  
+  
 }
 
 /**
@@ -139,9 +161,35 @@ async function onSearch(location) {
  * Framkvæmir leit að veðri fyrir núverandi staðsetningu.
  * Biður notanda um leyfi gegnum vafra.
  */
+
 async function onSearchMyLocation() {
   // TODO útfæra
+  let userLatitude = null;
+  let userLongitude = null;
+  if (!navigator.geolocation) {
+    console.error("Geolocation is not supported by your browser");
+    return; // Exit if geolocation is not supported
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      userLatitude = position.coords.latitude;
+      userLongitude = position.coords.longitude;
+      onSearch({
+        title: 'mín staðsetning',
+        lat: userLatitude,
+        lng: userLongitude,
+      })
+      console.log(`Latitude: ${userLatitude}, Longitude: ${userLongitude}`);
+    },
+    () => {
+      console.error("Unable to retrieve your location");
+    }
+  );
 }
+
+
+
 
 /**
  * Býr til takka fyrir staðsetningu.
@@ -188,9 +236,18 @@ function render(container, locations, onSearch, onSearchMyLocation) {
   // Búum til <header> með beinum DOM aðgerðum
   const headerElement = document.createElement('header');
   const heading = document.createElement('h1');
-  heading.appendChild(document.createTextNode('<fyrirsögn>'));
+  const p = document.createElement("p");
+  const heading2 = document.createElement("h2")
+  heading.appendChild(document.createTextNode('👉veður🔮spá👌'));
+  p.appendChild(document.createTextNode('👁️‍🗨️hvernig👻🕷️🦇er👺💀veðrið👽🧛‍♂️í🧟‍♀️🔮dag🕯️🦴???👹'));
+  heading2.appendChild(document.createTextNode("🎃Staðsetningar🎃 í 👻bOooOoOoðii👻"))
   headerElement.appendChild(heading);
+  headerElement.appendChild(p);
+  headerElement.appendChild(heading2);
   parentElement.appendChild(headerElement);
+
+
+  
 
   // TODO útfæra inngangstexta
   // Búa til <div class="loctions">
@@ -205,6 +262,12 @@ function render(container, locations, onSearch, onSearchMyLocation) {
   locationsElement.appendChild(locationsListElement);
 
   // <div class="loctions"><ul class="locations__list"><li><li><li></ul></div>
+
+
+
+
+  const myButtonElement = renderLocationButton("mín staðsetning", onSearchMyLocation)
+  locationsListElement.appendChild(myButtonElement);
   for (const location of locations) {
     const liButtonElement = renderLocationButton(location.title, () => {
       console.log('Halló!!', location);
